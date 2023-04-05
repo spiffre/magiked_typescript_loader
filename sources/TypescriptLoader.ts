@@ -71,8 +71,9 @@ export async function defaultTypescriptLoader (filepath: string, options: Partia
 }
 
 
+// HELPERS
 
-export async function parseJsTsFile (filepath: string, options: TypescriptLoaderOptions): Promise<TS.SourceFile>
+async function parseJsTsFile (filepath: string, options: TypescriptLoaderOptions): Promise<TS.SourceFile>
 {
 	const contentAsString = await Deno.readTextFile(filepath)
 	
@@ -86,7 +87,7 @@ export async function parseJsTsFile (filepath: string, options: TypescriptLoader
 	return source
 }
 
-export function parseJsTsString (code: string, options: TypescriptLoaderOptions): TS.SourceFile
+function _parseJsTsString (code: string, options: TypescriptLoaderOptions): TS.SourceFile
 {
 	const source = ts.createSourceFile(
 		'code_fragment',
