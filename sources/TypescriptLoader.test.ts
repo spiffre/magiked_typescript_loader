@@ -4,7 +4,7 @@ import * as path from "../deps/std/path.ts"
 import { Walker } from "../deps/magiked.ts"
 import { ts } from "../deps/typescript.ts"
 
-import type { JsPayload, TsPayload } from "./TypescriptLoader.ts"
+import type { TsPayload } from "./TypescriptLoader.ts"
 import { processorForTypescript } from "./TypescriptLoader.ts"
 
 const DATA_BASE_PATH = "tests/"
@@ -13,7 +13,7 @@ Deno.test("ts loader, ts file", async () =>
 {
 	const dir = path.resolve(DATA_BASE_PATH)
 
-	const walker = new Walker<JsPayload|TsPayload>()
+	const walker = new Walker<TsPayload>()
 	await walker.init(dir,
 	{
 		async onFileNodeEnter (node, _, filepath)
@@ -25,7 +25,7 @@ Deno.test("ts loader, ts file", async () =>
 
 			if (Walker.matches.glob(filepath, "**/*.ts"))
 			{
-				node.payload = processorForTypescript(content)
+				node.payload = processorForTypescript(content, { filepath })
 			}
 		}
 	})
@@ -40,13 +40,16 @@ Deno.test("ts loader, ts file", async () =>
 	assert(statement)
 
 	assert(statement.kind == ts.SyntaxKind.FunctionDeclaration)
+	
+	const extension = payload.ext
+	assert(extension && extension == '.ts')
 });
 
 Deno.test("ts loader, js file", async () =>
 {
 	const dir = path.resolve(DATA_BASE_PATH)
 
-	const walker = new Walker<JsPayload|TsPayload>()
+	const walker = new Walker<TsPayload>()
 	await walker.init(dir,
 	{
 		async onFileNodeEnter (node, _, filepath)
@@ -58,7 +61,7 @@ Deno.test("ts loader, js file", async () =>
 
 			if (Walker.matches.glob(filepath, "**/*.js"))
 			{
-				node.payload = processorForTypescript(content)
+				node.payload = processorForTypescript(content, { filepath })
 			}
 		}
 	})
@@ -73,4 +76,7 @@ Deno.test("ts loader, js file", async () =>
 	assert(statement)
 
 	assert(statement.kind == ts.SyntaxKind.FunctionDeclaration)
+	
+	const extension = payload.ext
+	assert(extension && extension == '.js')
 });

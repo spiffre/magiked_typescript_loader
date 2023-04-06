@@ -1,19 +1,16 @@
+import * as path from "../deps/std/path.ts"
+
 import type { Payload } from "../deps/magiked.ts"
 
 import { ts } from "../deps/typescript.ts"
 import type { TS } from "../deps/typescript.ts"
 
 
-export interface JsPayload extends Payload
-{
-	type: 'javascript'
-	ast: TS.SourceFile
-}
-
 export interface TsPayload extends Payload
 {
 	type: 'typescript'
 	ast: TS.SourceFile
+	ext?: string
 }
 
 
@@ -27,7 +24,7 @@ export interface TypescriptLoaderOptions
 const DEFAULT_OPTIONS = { target : ts.ScriptTarget.ES2022, parents : true }
 
 
-export function processorForTypescript (code: string, options: Partial<TypescriptLoaderOptions> = {}): JsPayload|TsPayload
+export function processorForTypescript (code: string, options: Partial<TypescriptLoaderOptions> = {}): TsPayload
 {
 	const opts = { ...DEFAULT_OPTIONS, ...options }
 	const filepath = opts.filepath ?? 'code_fragment'
@@ -48,25 +45,19 @@ export function processorForTypescript (code: string, options: Partial<Typescrip
 		throw new Error(`Failed to parse file: ${filepath}`, { cause : error })
 	}
 	
-	//const ext = path.extname(filepath)
-	//if (ext == '.js')
-	//{
-	//	return {
-	//		type : 'javascript',
-	//		extension : '.js',
-	//		
-	//		rootAst
-	//	}
-	//}
-	//else if (ext == '.ts')
+	if (opts.filepath)
 	{
+		const ext = path.extname(filepath)
+		
 		return {
 			type : 'typescript',
-			ast : source
+			ast : source,
+			ext
 		}
 	}
-	//else
-	//{
-	//	throw new Error(`Unexpected file extension: "${ext}" for file:\n${filepath}`)
-	//}
+	
+	return {
+		type : 'typescript',
+		ast : source
+	}
 }
