@@ -4,11 +4,10 @@ import * as path from "../deps/std/path.ts"
 import { Walker } from "../deps/magiked.ts"
 import { ts } from "../deps/typescript.ts"
 
-import type { JsPayload, TsPayload, TypescriptLoaderOptions } from "./TypescriptLoader.ts"
-import { defaultTypescriptLoader } from "./TypescriptLoader.ts"
+import type { JsPayload, TsPayload } from "./TypescriptLoader.ts"
+import { processorForTypescript } from "./TypescriptLoader.ts"
 
 const DATA_BASE_PATH = "tests/"
-const OPTIONS: TypescriptLoaderOptions = { target : ts.ScriptTarget.ES2022, parents : false }
 
 Deno.test("ts loader", async () =>
 {
@@ -17,18 +16,16 @@ Deno.test("ts loader", async () =>
 	const walker = new Walker<JsPayload|TsPayload>()
 	await walker.init(dir,
 	{
-		handlers :
+		async onFileNodeEnter (node, _, filepath)
 		{
-			".js" :
-			{
-				loader : defaultTypescriptLoader,
-				options : OPTIONS as unknown as Record<string, unknown>  // fixme: this is annoying
-			},
+			// filepath is provided only on first pass
+			assert(filepath)
 			
-			".ts" :
+			const content = await Deno.readTextFile(filepath)
+
+			if (Walker.matches.glob(filepath, "**/*.ts"))
 			{
-				loader : defaultTypescriptLoader,
-				options : OPTIONS as unknown as Record<string, unknown>  // fixme: this is annoying
+				node.payload = processorForTypescript(content)
 			}
 		}
 	})
@@ -39,7 +36,7 @@ Deno.test("ts loader", async () =>
 	const payload = node.payload
 	assert(payload)
 	
-	const statement = payload.rootAst.statements[0]
+	const statement = payload.ast.statements[0]
 	assert(statement)
 
 	assert(statement.kind == ts.SyntaxKind.FunctionDeclaration)
